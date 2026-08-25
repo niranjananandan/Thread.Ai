@@ -85,9 +85,10 @@ def log_query(user_query):
     except Exception as e:
         print(f"Failed to log query: {e}")
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    """Serve the THREAD.AI frontend."""
+    # If Google OAuth falls back to a POST redirect on mobile, just load the app normally.
+    # The frontend will still require them to log in via the popup button.
     return render_template('index.html')
 
 # ==========================================
