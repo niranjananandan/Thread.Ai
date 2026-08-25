@@ -354,32 +354,33 @@ def chat_stream():
             active_chat = sessions[session_id]
             
             def generate_chat_response():
-                response = active_chat.send_message(user_message, stream=True)
-                for chunk in response:
-                    if chunk.text:
-                        yield chunk.text
-                        
-                # After streaming, save the updated history to the database
-                if google_id:
-                    try:
-                        formatted_history = [{"role": m.role, "parts": [p.text for p in m.parts]} for m in active_chat.history]
-                        history_json = json.dumps(formatted_history)
-                        
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT 1 FROM user_chats WHERE session_id = ? AND google_id = ?", (session_id, google_id))
-                        exists = cursor.fetchone()
-                        
-                        if exists:
-                            cursor.execute("UPDATE user_chats SET history_json = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ? AND google_id = ?", 
-                                         (history_json, session_id, google_id))
-                        else:
-                            cursor.execute("INSERT INTO user_chats (session_id, google_id, title, history_json) VALUES (?, ?, 'New Chat', ?)", 
-                                         (session_id, google_id, history_json))
-                        conn.commit()
-                        conn.close()
-                    except Exception as e:
-                        print(f"Failed to save chat history to DB: {e}")
+                try:
+                    response = active_chat.send_message(user_message, stream=True)
+                    for chunk in response:
+                        if chunk.text:
+                            yield chunk.text
+                            
+                    # After streaming, save the updated history to the database
+                    if google_id:
+                        try:
+                            formatted_history = [{"role": m.role, "parts": [p.text for p in m.parts]} for m in active_chat.history]
+                            history_json = json.dumps(formatted_history)
+                            
+                            conn = get_db_connection()
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT session_id FROM user_chats WHERE session_id = ?", (session_id,))
+                            if cursor.fetchone():
+                                cursor.execute("UPDATE user_chats SET history_json = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?", 
+                                             (history_json, session_id))
+                            else:
+                                cursor.execute("INSERT INTO user_chats (session_id, google_id, title, history_json) VALUES (?, ?, 'New Chat', ?)", 
+                                             (session_id, google_id, history_json))
+                            conn.commit()
+                            conn.close()
+                        except Exception as e:
+                            print(f"Failed to save chat history to DB: {e}")
+                except Exception as e:
+                    yield f"\n\n[System Error: {str(e)}]\nPlease check if your GEMINI_API_KEY is valid in Render."
                         
             return Response(generate_chat_response(), mimetype='text/plain')
             
