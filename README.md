@@ -10,8 +10,7 @@
 [![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini-orange)](https://deepmind.google/technologies/gemini/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An advanced, AI-powered conversational agent tailored exclusively for the textile, fashion, and garment industry. THREAD.AI empowers users to manage inventory, query complex datasets, and get instant, domain-specific insights using Google's state-of-the-art Gemini LLM.
-
+An advanced, AI-powered conversational agent tailored exclusively for the textile, fashion, and garment industry
 </div>
 
 ---
@@ -32,8 +31,6 @@ An advanced, AI-powered conversational agent tailored exclusively for the textil
 **Frontend:**
 - HTML5, CSS3, Vanilla JavaScript
 - Google Identity Services (OAuth)
-- PapaParse (Client-side CSV validation)
-- Marked.js (Markdown rendering)
 
 **Backend:**
 - **Python** (Core Logic)
@@ -124,7 +121,7 @@ THREAD.AI/
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/thread-ai/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/niranjananandan/thread-ai/issues).
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
