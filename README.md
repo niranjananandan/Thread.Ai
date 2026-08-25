@@ -132,11 +132,19 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ---
 
+## 🤖 Acknowledgements
+
+The core concepts, industry-specific logic, and continuous fine-tuning of **THREAD.AI** are the original ideas of the author. 
+
+The codebase was actively developed and brought to life through pair programming with **Antigravity**, an advanced AI coding agent.
+
+---
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 <div align="center">
-  <i>Created by NIRANJAN ANANDAN</i>
+  <i>Created and fine-tuned by NIRANJAN ANANDAN</i>
 </div>
