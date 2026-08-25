@@ -3,6 +3,8 @@
 # 🧵 THREAD.AI
 **Smart Textile Intelligence & AI Assistant**
 
+*This project was built through a collaborative effort—conceptualized and fine-tuned by the owner's original ideas, and actively developed alongside an AI agent.*
+
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/flask-latest-green.svg)](https://flask.palletsprojects.com/)
 [![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini-orange)](https://deepmind.google/technologies/gemini/)
