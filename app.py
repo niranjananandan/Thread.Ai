@@ -27,13 +27,14 @@ ADMIN_EMAILS = ['1u24ai024.niranjan@gmail.com', 'niranjan.admin@gmail.com', 'adm
 
 # File Upload Configurations
 app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024 # 25 MB max size
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Vercel uses a read-only filesystem except for the /tmp directory
+UPLOAD_FOLDER = '/tmp'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def get_db_connection():
     """Establish and return a connection to the SQLite database."""
-    conn = sqlite3.connect('textile.db')
+    # Vercel's root directory is read-only. We must place the SQLite file in /tmp
+    conn = sqlite3.connect('/tmp/textile.db')
     conn.row_factory = sqlite3.Row  # Enables column access by name
     return conn
 
