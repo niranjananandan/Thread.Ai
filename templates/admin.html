@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THREAD.AI Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+        body { background-color: #000000; color: #e3e3e3; height: 100vh; display: flex; overflow: hidden; }
+        .sidebar { width: 280px; background: rgba(20, 20, 22, 0.95); border-right: 1px solid rgba(255, 255, 255, 0.05); padding: 30px 20px; display: flex; flex-direction: column; backdrop-filter: blur(20px); z-index: 10; }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-left: 10px; }
+        .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #c084fc 0%, #ff82c8 100%); border-radius: 12px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 20px rgba(192, 132, 252, 0.3); }
+        .brand-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2; fill: none; }
+        .brand-text h1 { font-size: 1.4rem; font-weight: 700; color: #fff; }
+        .brand-text span { font-size: 0.7rem; color: #c084fc; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 14px; color: #a0a0a5; text-decoration: none; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(192, 132, 252, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%); color: #fff; border-left: 3px solid #c084fc; }
+        .nav-item svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .back-to-bot { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #e3e3e3; text-decoration: none; font-weight: 500; }
+        
+        .main-content { flex: 1; padding: 40px 60px; overflow-y: auto; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; z-index: 1; position: relative; }
+        .header h2 { font-size: 2.2rem; font-weight: 600; color: #fff; }
+        .admin-profile { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); padding: 8px 16px 8px 8px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.08); }
+        .admin-avatar { width: 36px; height: 36px; border-radius: 50%; background: #c084fc; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 600; }
+        
+        .view-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+        .stat-card { background: rgba(30, 30, 35, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 30px; }
+        .stat-value { font-size: 2.8rem; font-weight: 700; color: #fff; margin-bottom: 4px; line-height: 1; }
+        
+        /* Tables */
+        .data-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .data-table-container { background: rgba(30, 30, 35, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px 24px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        th { color: #8e8e93; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { color: #e3e3e3; font-size: 0.95rem; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-primary { background: linear-gradient(135deg, #c084fc 0%, #ff82c8 100%); color: #fff; box-shadow: 0 4px 15px rgba(192, 132, 252, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+        
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+        .modal-content { background: #1e1e23; padding: 32px; border-radius: 24px; width: 450px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h3 { font-size: 1.4rem; color: #fff; }
+        .close-btn { cursor: pointer; color: #a0a0a5; font-size: 1.5rem; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #a0a0a5; font-size: 0.9rem; }
+        .form-group input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff; outline: none; }
+        .form-group input:focus { border-color: #c084fc; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line></svg></div>
+            <div class="brand-text"><h1>THREAD</h1><span>Admin Console</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a onclick="switchTab('overview')" class="nav-item active" id="tab-overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Overview</a>
+            <a onclick="switchTab('database')" class="nav-item" id="tab-database"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>Database Details</a>
+        </nav>
+        <div class="sidebar-footer"><a href="/" class="back-to-bot">Back to Chatbot</a></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h2 id="page-title">Dashboard Overview</h2>
+            <div class="admin-profile"><div class="admin-avatar">A</div><div><span style="font-size:0.9rem;">System Admin</span></div></div>
+        </div>
+
+        <!-- OVERVIEW SECTION -->
+        <div id="view-overview" class="view-section active">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value">{{ stats.total_users }}</div><div style="color:#8e8e93">Total Users</div></div>
+                <div class="stat-card"><div class="stat-value">{{ stats.total_chats }}</div><div style="color:#8e8e93">Total Chats Saved</div></div>
+                <div class="stat-card"><div class="stat-value">{{ stats.total_queries }}</div><div style="color:#8e8e93">All Queries Logged</div></div>
+            </div>
+        </div>
+
+        <!-- DATABASE SECTION -->
+        <div id="view-database" class="view-section">
+            <div class="data-header">
+                <h3 style="color: #fff;">Registered Users</h3>
+            </div>
+            <div class="data-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Google ID</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td style="color:#8e8e93; font-family:monospace;">{{ user.google_id }}</td>
+                            <td>{{ user.created_at }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">No users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="data-header" style="margin-top: 40px;">
+                <h3 style="color: #fff;">Saved Chats Across All Users</h3>
+            </div>
+            <div class="data-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Email</th>
+                            <th>Chat Title</th>
+                            <th>Session ID</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chat in chats %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ chat.name }}</td>
+                            <td style="color:#a0a0a5;">{{ chat.email }}</td>
+                            <td>{{ chat.title }}</td>
+                            <td style="color:#8e8e93; font-family:monospace; font-size: 0.85rem;">{{ chat.session_id }}</td>
+                            <td>{{ chat.updated_at }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5">No chats found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentEntity = '';
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            const titles = {
+                'overview': 'Dashboard Overview',
+                'database': 'Database Details'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+        }
+    </script>
+</body>
+</html>
