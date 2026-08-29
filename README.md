@@ -1,6 +1,6 @@
 <div align="center">
   
-# 🧵 THREAD.AI
+#  THREAD.AI
 **Smart Textile Intelligence & AI Assistant**
 
 *This project was built through a collaborative effort—conceptualized and fine-tuned by the owner's original ideas, and actively developed alongside an AI agent.*
@@ -15,18 +15,18 @@ An advanced, AI-powered conversational agent tailored exclusively for the textil
 
 ---
 
-## ✨ Features
+##  Features
 
-- 🤖 **Domain-Specific AI:** Fine-tuned prompts ensure the assistant exclusively handles textile-related inquiries, refusing out-of-domain questions to maintain professional focus.
-- 📊 **Dynamic Dataset Analysis:** Upload CSV files containing fabric inventory, sales data, or supply chain metrics. The AI parses the data dynamically using `pandas` and provides intelligent, contextual answers.
-- 🔐 **Secure Google Authentication:** Seamless and secure user login utilizing the latest Google Identity Services (GIS) One-Tap architecture.
-- 💾 **Persistent Chat History:** Seamlessly picks up where you left off. All chat sessions are securely stored in a local SQLite database and tied to the user's authenticated Google ID.
-- 📱 **Modern & Responsive UI:** A beautifully crafted interface heavily inspired by industry-leading chat applications. Features a fully responsive mobile-first design, interactive sidebars, and a persistent Light/Dark mode toggle.
-- 🛡️ **Admin Dashboard:** Built-in administrative portal to monitor system analytics, track user registrations, and oversee total active chat sessions across the platform.
+-  **Domain-Specific AI:** Fine-tuned prompts ensure the assistant exclusively handles textile-related inquiries, refusing out-of-domain questions to maintain professional focus.
+-  **Dynamic Dataset Analysis:** Upload CSV files containing fabric inventory, sales data, or supply chain metrics. The AI parses the data dynamically using `pandas` and provides intelligent, contextual answers.
+-  **Secure Google Authentication:** Seamless and secure user login utilizing the latest Google Identity Services (GIS) One-Tap architecture.
+-  **Persistent Chat History:** Seamlessly picks up where you left off. All chat sessions are securely stored in a local SQLite database and tied to the user's authenticated Google ID.
+-  **Modern & Responsive UI:** A beautifully crafted interface heavily inspired by industry-leading chat applications. Features a fully responsive mobile-first design, interactive sidebars, and a persistent Light/Dark mode toggle.
+-  **Admin Dashboard:** Built-in administrative portal to monitor system analytics, track user registrations, and oversee total active chat sessions across the platform.
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 **Frontend:**
 - HTML5, CSS3, Vanilla JavaScript
@@ -41,7 +41,7 @@ An advanced, AI-powered conversational agent tailored exclusively for the textil
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -91,7 +91,7 @@ Navigate to `http://127.0.0.1:5000` in your web browser to start using THREAD.AI
 
 ---
 
-## 🛡️ Admin Configuration
+##  Admin Configuration
 
 To access the Admin Dashboard:
 1. Open `app.py`.
@@ -104,7 +104,7 @@ To access the Admin Dashboard:
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 THREAD.AI/
@@ -119,7 +119,7 @@ THREAD.AI/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/niranjananandan/thread-ai/issues).
 
@@ -131,7 +131,7 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ---
 
-## 🤖 Acknowledgements
+##  Acknowledgements
 
 The core concepts, industry-specific logic, and continuous fine-tuning of **THREAD.AI** are the original ideas of the author. 
 
@@ -139,7 +139,7 @@ The codebase was actively developed and brought to life through pair programming
 
 ---
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
