@@ -17,7 +17,7 @@ load_dotenv()
 # ==========================================
 # Initialize the Gemini model for fast and smart responses
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-model = genai.GenerativeModel('gemini-3.6-flash')
+model = genai.GenerativeModel('gemini-3.5-flash')
 
 app = Flask(__name__)
 
@@ -194,7 +194,7 @@ Rule 2: You MUST answer basic conversational greetings, small talk, and simple g
 Rule 3: If the user asks complex, detailed, or domain-specific questions completely unrelated to textiles (e.g., medical advice, coding a website, historical essays, legal advice), you MUST refuse to answer and reply EXACTLY: "Please ask only textile-based questions with me."
 Rule 4: If the user provides data (e.g. CSV) that is clearly NOT related to the textile industry, you MUST refuse to analyze it and reply EXACTLY: "Please do not upload non-textile documents."
 Do not deviate from these rules."""
-chat_model = genai.GenerativeModel('gemini-3.6-flash', system_instruction=system_instruction)
+chat_model = genai.GenerativeModel('gemini-3.5-flash', system_instruction=system_instruction)
 
 sessions = {}
 
