@@ -292,100 +292,173 @@ def validate_csv():
 @app.route('/api/chat_stream', methods=['POST'])
 def chat_stream():
     try:
-        user_message = request.form.get('message', '').strip()
-        session_id = request.form.get('session_id', 'default_session')
-        
-        if not user_message and request.is_json:
-            json_data = request.json
-            user_message = json_data.get('message', '').strip()
-            session_id = json_data.get('session_id', 'default_session')
-            
-        # Extract google_id
-        google_id = request.form.get('google_id') if request.form else None
-        if not google_id and request.is_json:
-            google_id = request.json.get('google_id')
-            
+        json_data = request.get_json(silent=True) or {}
+
+        user_message = request.form.get('message', '').strip() or str(json_data.get('message', '')).strip()
+        session_id = request.form.get('session_id', 'default_session') or json_data.get('session_id', 'default_session')
+        google_id = request.form.get('google_id', '') or json_data.get('google_id', '')
+
         if not user_message:
-            return Response("Please enter a message so I can assist you.", mimetype='text/plain')
-            
+            return Response("Please enter a message so I can assist you.", mimetype='text/plain', status=400)
+
+        if not os.environ.get("GEMINI_API_KEY"):
+            return Response("GEMINI_API_KEY is not configured on the server.", mimetype='text/plain', status=500)
+
         log_query(user_message)
-        
+
         uploaded_file = request.files.get('file')
+
         if uploaded_file and uploaded_file.filename:
             if not uploaded_file.filename.lower().endswith('.csv'):
-                return Response("Invalid file type. Please upload a valid textile/clothing inventory CSV file.", mimetype='text/plain')
-            
+                return Response(
+                    "Invalid file type. Please upload a valid textile/clothing inventory CSV file.",
+                    mimetype='text/plain',
+                    status=400
+                )
+
             filename = secure_filename(uploaded_file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(filepath)
-            
+
             try:
                 df = pd.read_csv(filepath)
                 csv_data = df.to_csv(index=False)
-                
-                generation_prompt = f"Here is the user's uploaded complete CSV dataset:\n{csv_data}\n\nUser Question: {user_message}\nRemember Rule 3: Evaluate if this CSV data is textile-related. If not, reject it. Analyze the entire dataset to answer the user's question accurately."
-                
-                def generate_csv_response():
-                    response = chat_model.generate_content(generation_prompt, stream=True)
-                    for chunk in response:
-                        if chunk.text:
-                            yield chunk.text
-                return Response(generate_csv_response(), mimetype='text/plain')
+
+                generation_prompt = f"""
+Here is the user's uploaded complete CSV dataset:
+{csv_data}
+
+User Question: {user_message}
+
+Follow the THREAD.AI rules. First determine whether the dataset is textile-related.
+If it is not textile-related, reply exactly:
+Please do not upload non-textile documents.
+
+If it is textile-related, analyze the dataset and answer the user's question accurately.
+"""
+
+                response = chat_model.generate_content(generation_prompt)
+                answer = getattr(response, 'text', '').strip()
+
+                if not answer:
+                    answer = "I could not generate a response for this dataset. Please try again."
+
+                return Response(answer, mimetype='text/plain', status=200)
+
+            except Exception as e:
+                print(f"CSV analysis error: {e}")
+                return Response(
+                    f"THREAD.AI could not analyze the CSV. Error: {str(e)}",
+                    mimetype='text/plain',
+                    status=502
+                )
             finally:
                 if os.path.exists(filepath):
-                    os.remove(filepath)
-        else:
-            # Handle DB / Chat mode
-            if session_id not in sessions:
-                history = []
-                if google_id:
+                    try:
+                        os.remove(filepath)
+                    except Exception:
+                        pass
+
+        # Normal chat mode - intentionally non-streaming for reliable Render/Gunicorn responses.
+        if session_id not in sessions:
+            history = []
+
+            if google_id:
+                try:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT history_json FROM user_chats WHERE session_id = ? AND google_id = ?", (session_id, google_id))
+                    cursor.execute(
+                        "SELECT history_json FROM user_chats WHERE session_id = ? AND google_id = ?",
+                        (session_id, google_id)
+                    )
                     row = cursor.fetchone()
                     conn.close()
+
                     if row and row['history_json']:
                         try:
                             history = json.loads(row['history_json'])
-                        except:
-                            pass
-                sessions[session_id] = chat_model.start_chat(history=history)
-                
-            active_chat = sessions[session_id]
-            
-            def generate_chat_response():
-                try:
-                    response = active_chat.send_message(user_message, stream=True)
-                    for chunk in response:
-                        if chunk.text:
-                            yield chunk.text
-                            
-                    # After streaming, save the updated history to the database
-                    if google_id:
-                        try:
-                            formatted_history = [{"role": m.role, "parts": [p.text for p in m.parts]} for m in active_chat.history]
-                            history_json = json.dumps(formatted_history)
-                            
-                            conn = get_db_connection()
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT session_id FROM user_chats WHERE session_id = ?", (session_id,))
-                            if cursor.fetchone():
-                                cursor.execute("UPDATE user_chats SET history_json = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ?", 
-                                             (history_json, session_id))
-                            else:
-                                cursor.execute("INSERT INTO user_chats (session_id, google_id, title, history_json) VALUES (?, ?, 'New Chat', ?)", 
-                                             (session_id, google_id, history_json))
-                            conn.commit()
-                            conn.close()
-                        except Exception as e:
-                            print(f"Failed to save chat history to DB: {e}")
+                        except Exception:
+                            history = []
                 except Exception as e:
-                    yield f"\n\n[System Error: {str(e)}]\nPlease check if your GEMINI_API_KEY is valid in Render."
-                        
-            return Response(generate_chat_response(), mimetype='text/plain')
-            
+                    print(f"Failed to load chat history: {e}")
+
+            try:
+                sessions[session_id] = chat_model.start_chat(history=history)
+            except Exception as e:
+                print(f"Failed to start Gemini chat: {e}")
+                return Response(
+                    f"THREAD.AI could not start the AI session. Error: {str(e)}",
+                    mimetype='text/plain',
+                    status=502
+                )
+
+        active_chat = sessions[session_id]
+
+        try:
+            response = active_chat.send_message(user_message)
+            answer = getattr(response, 'text', '').strip()
+
+            if not answer:
+                answer = "I could not generate a response. Please try again."
+
+            if google_id:
+                try:
+                    formatted_history = []
+                    for m in active_chat.history:
+                        parts = []
+                        for p in getattr(m, 'parts', []):
+                            part_text = getattr(p, 'text', None)
+                            if part_text:
+                                parts.append(part_text)
+                        if parts:
+                            formatted_history.append({
+                                "role": m.role,
+                                "parts": parts
+                            })
+
+                    history_json = json.dumps(formatted_history)
+
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "SELECT session_id FROM user_chats WHERE session_id = ? AND google_id = ?",
+                        (session_id, google_id)
+                    )
+
+                    if cursor.fetchone():
+                        cursor.execute(
+                            "UPDATE user_chats SET history_json = ?, updated_at = CURRENT_TIMESTAMP WHERE session_id = ? AND google_id = ?",
+                            (history_json, session_id, google_id)
+                        )
+                    else:
+                        cursor.execute(
+                            "INSERT INTO user_chats (session_id, google_id, title, history_json) VALUES (?, ?, 'New Chat', ?)",
+                            (session_id, google_id, history_json)
+                        )
+
+                    conn.commit()
+                    conn.close()
+
+                except Exception as e:
+                    print(f"Failed to save chat history to DB: {e}")
+
+            return Response(answer, mimetype='text/plain', status=200)
+
+        except Exception as e:
+            print(f"Gemini chat error: {e}")
+            return Response(
+                f"THREAD.AI could not generate a response. Error: {str(e)}",
+                mimetype='text/plain',
+                status=502
+            )
+
     except Exception as e:
-        return Response(f"THREAD.AI Services are currently unreachable. Error: {str(e)}", mimetype='text/plain')
+        print(f"Chat route error: {e}")
+        return Response(
+            f"THREAD.AI Services are currently unreachable. Error: {str(e)}",
+            mimetype='text/plain',
+            status=500
+        )
 
 if __name__ == '__main__':
     app.run(debug=True)
