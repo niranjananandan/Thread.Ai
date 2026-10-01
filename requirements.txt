@@ -4,3 +4,4 @@ pandas
 werkzeug
 gunicorn
 python-dotenv
+google-auth
