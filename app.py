@@ -277,16 +277,51 @@ def update_chat_title():
 @app.route('/api/validate_csv', methods=['POST'])
 def validate_csv():
     try:
-        data = request.json.get('data', '')
+        payload = request.get_json(silent=True) or {}
+        data = str(payload.get('data', '')).strip()
+
         if not data:
             return jsonify({"valid": False, "error": "No data provided"})
-        
-        prompt = f"Analyze this CSV sample data:\n{data}\n\nIs this dataset related to textiles, clothing, fashion, garments, or fabric? Answer ONLY with 'YES' or 'NO'."
-        response = chat_model.generate_content(prompt)
-        is_valid = 'YES' in response.text.upper()
-        
-        return jsonify({"valid": is_valid})
+
+        # Validate the dataset locally instead of asking Gemini to classify
+        # only one CSV row. This avoids false rejections of valid textile
+        # datasets when the preview row does not contain enough context.
+        normalized = data.lower().replace('_', ' ').replace('-', ' ')
+
+        textile_terms = [
+            'textile', 'fabric', 'fiber', 'fibre', 'garment', 'clothing',
+            'apparel', 'cotton', 'polyester', 'nylon', 'silk', 'wool',
+            'linen', 'denim', 'rayon', 'viscose', 'tencel', 'acrylic',
+            'organic cotton', 'weave', 'knit', 'gsm', 'breathability',
+            'durability', 'moisture absorption', 'fabric type', 'fiber category',
+            'fabric weight', 'stock meters', 'price per meter', 'defect rate'
+        ]
+
+        textile_score = sum(1 for term in textile_terms if term in normalized)
+
+        # Strong textile-specific column combinations. The uploaded
+        # textile_fabric_dataset.csv contains these fields.
+        textile_columns = [
+            'product id', 'fabric type', 'fiber category', 'weave or knit',
+            'fabric weight gsm', 'primary use', 'production region',
+            'stock meters', 'price per meter inr', 'defect rate percent',
+            'moisture absorption percent'
+        ]
+
+        column_score = sum(1 for col in textile_columns if col in normalized)
+
+        # Accept if the CSV clearly contains textile-specific fields or
+        # enough textile terminology in its header/sample.
+        is_valid = column_score >= 2 or textile_score >= 3
+
+        return jsonify({
+            "valid": is_valid,
+            "textile_score": textile_score,
+            "column_score": column_score
+        })
+
     except Exception as e:
+        print(f"CSV validation error: {e}")
         return jsonify({"valid": False, "error": str(e)}), 500
 
 @app.route('/api/chat_stream', methods=['POST'])
